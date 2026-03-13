@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+	--font-mono:
+		"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+		"Courier New", monospace;
+	--font-body-mono:
+		"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+		"Courier New", monospace;
+
+	/* ── Accent colors ──────────────────────────────────── */
+	--color-accent-green: #10b981;
+	--color-accent-green-hover: #34d399;
+	--color-accent-red: #ef4444;
+	--color-accent-red-hover: #f87171;
+	--color-accent-amber: #f59e0b;
+
+	/* ── Background colors ──────────────────────────────── */
+	--color-bg-page: #0a0a0a;
+	--color-bg-surface: #0f0f0f;
+	--color-bg-input: #111111;
+	--color-bg-elevated: #1a1a1a;
+	--color-bg-elevated-hover: #262626;
+	--color-diff-added-bg: #0a1a0f;
+	--color-diff-removed-bg: #1a0a0a;
+
+	/* ── Border colors ──────────────────────────────────── */
+	--color-border-primary: #2a2a2a;
+	--color-border-hover: #3f3f46;
+
+	/* ── Text colors ────────────────────────────────────── */
+	--color-text-primary: #fafafa;
+	--color-text-secondary: #6b7280;
+	--color-text-tertiary: #4b5563;
+	--color-text-muted: #525252;
+}
