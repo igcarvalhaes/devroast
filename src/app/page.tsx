@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CodeInputSection } from "@/components/code-input-section";
+import { HomeMetrics } from "@/components/home-metrics";
 import { button } from "@/components/ui/button";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
 const LEADERBOARD_DATA = [
 	{
@@ -51,11 +53,9 @@ function HeroSection() {
 
 function FooterStats() {
 	return (
-		<div className="flex items-center justify-center gap-6">
-			<span className="font-body-mono text-xs text-text-tertiary">2,847 codes roasted</span>
-			<span className="font-mono text-xs text-text-tertiary">·</span>
-			<span className="font-body-mono text-xs text-text-tertiary">avg score: 4.2/10</span>
-		</div>
+		<HydrateClient>
+			<HomeMetrics />
+		</HydrateClient>
 	);
 }
 
@@ -136,7 +136,10 @@ function LeaderboardPreview() {
 	);
 }
 
-export default function Home() {
+export default async function Home() {
+	// Prefetch metrics no server
+	prefetch(trpc.roast.getHomeMetrics.queryOptions());
+
 	return (
 		<main className="flex flex-col items-center gap-8 pt-20 pb-0 px-10 bg-bg-page min-h-screen">
 			<HeroSection />
