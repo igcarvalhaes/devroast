@@ -111,7 +111,7 @@ async function CodeBlock({ code, language = "javascript", filename, className }:
 
 	return (
 		<CodeBlockRoot className={className}>
-			<CodeBlockHeader filename={filename} />
+			{filename !== undefined && <CodeBlockHeader filename={filename} />}
 			<CodeBlockBody html={html} lineCount={lineCount} />
 		</CodeBlockRoot>
 	);

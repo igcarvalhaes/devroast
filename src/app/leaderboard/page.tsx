@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { CodeLine } from "@/components/leaderboard-code-block";
 import { LeaderboardEntry } from "@/components/leaderboard-entry";
 
 export const metadata: Metadata = {
@@ -12,7 +11,7 @@ interface LeaderboardData {
 	score: number;
 	language: string;
 	lineCount: number;
-	code: CodeLine[];
+	code: string;
 }
 
 // Dados estáticos de exemplo
@@ -22,159 +21,47 @@ const leaderboardData: LeaderboardData[] = [
 		score: 1.2,
 		language: "javascript",
 		lineCount: 3,
-		code: [
-			{
-				tokens: [
-					{ content: "eval", color: "#61AFEF" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: "prompt", color: "#61AFEF" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: '"enter code"', color: "#E5C07B" },
-					{ content: "))", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "document", color: "#E06C75" },
-					{ content: ".write", color: "#61AFEF" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: "response", color: "#E06C75" },
-					{ content: ")", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [{ content: "// trust the user lol", color: "#8B8B8B" }],
-			},
-		],
+		code: `eval(prompt("enter code"))
+document.write(response)
+// trust the user lol`,
 	},
 	{
 		rank: 2,
 		score: 1.8,
 		language: "python",
 		lineCount: 4,
-		code: [
-			{
-				tokens: [
-					{ content: "def ", color: "#C678DD" },
-					{ content: "secure_password", color: "#61AFEF" },
-					{ content: "():", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "    ", color: "#ABB2BF" },
-					{ content: "return ", color: "#C678DD" },
-					{ content: '"123456"', color: "#E5C07B" },
-				],
-			},
-			{
-				tokens: [{ content: "", color: "#ABB2BF" }],
-			},
-			{
-				tokens: [{ content: "# TODO: make it more secure later", color: "#8B8B8B" }],
-			},
-		],
+		code: `def secure_password():
+    return "123456"
+
+# TODO: make it more secure later`,
 	},
 	{
 		rank: 3,
 		score: 2.3,
 		language: "typescript",
 		lineCount: 3,
-		code: [
-			{
-				tokens: [
-					{ content: "const ", color: "#C678DD" },
-					{ content: "isProduction ", color: "#E06C75" },
-					{ content: "= ", color: "#ABB2BF" },
-					{ content: "true", color: "#D19A66" },
-					{ content: ";", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "if ", color: "#C678DD" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: "isProduction", color: "#E06C75" },
-					{ content: ") ", color: "#ABB2BF" },
-					{ content: "console", color: "#E06C75" },
-					{ content: ".log", color: "#61AFEF" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: "error", color: "#E06C75" },
-					{ content: ");", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [{ content: "// errors are features", color: "#8B8B8B" }],
-			},
-		],
+		code: `const isProduction = true;
+if (isProduction) console.log(error);
+// errors are features`,
 	},
 	{
 		rank: 4,
 		score: 2.9,
 		language: "java",
 		lineCount: 5,
-		code: [
-			{
-				tokens: [
-					{ content: "public ", color: "#C678DD" },
-					{ content: "void ", color: "#C678DD" },
-					{ content: "processData", color: "#61AFEF" },
-					{ content: "() {", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "    ", color: "#ABB2BF" },
-					{ content: "try ", color: "#C678DD" },
-					{ content: "{", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "        ", color: "#ABB2BF" },
-					{ content: "// TODO: implement this", color: "#8B8B8B" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "    ", color: "#ABB2BF" },
-					{ content: "} ", color: "#ABB2BF" },
-					{ content: "catch ", color: "#C678DD" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: "Exception ", color: "#E5C07B" },
-					{ content: "e) {}", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [{ content: "}", color: "#ABB2BF" }],
-			},
-		],
+		code: `public void processData() {
+    try {
+        // TODO: implement this
+    } catch (Exception e) {}
+}`,
 	},
 	{
 		rank: 5,
 		score: 3.4,
 		language: "php",
 		lineCount: 2,
-		code: [
-			{
-				tokens: [
-					{ content: "$password ", color: "#E06C75" },
-					{ content: "= ", color: "#ABB2BF" },
-					{ content: "$_GET", color: "#E06C75" },
-					{ content: "[", color: "#ABB2BF" },
-					{ content: "'pwd'", color: "#E5C07B" },
-					{ content: "];", color: "#ABB2BF" },
-				],
-			},
-			{
-				tokens: [
-					{ content: "mysqli_query", color: "#61AFEF" },
-					{ content: "(", color: "#ABB2BF" },
-					{ content: '"SELECT * FROM users WHERE pass=$password"', color: "#E5C07B" },
-					{ content: ");", color: "#ABB2BF" },
-				],
-			},
-		],
+		code: `$password = $_GET['pwd'];
+mysqli_query("SELECT * FROM users WHERE pass=$password");`,
 	},
 ];
 
@@ -190,7 +77,7 @@ export default function LeaderboardPage() {
 					</div>
 
 					<p className="font-body-mono text-sm text-text-secondary">
-						// the most roasted code on the internet
+						{"// the most roasted code on the internet"}
 					</p>
 
 					<div className="flex items-center gap-2">

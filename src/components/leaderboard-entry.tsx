@@ -1,6 +1,6 @@
-import { type ComponentProps, forwardRef } from "react";
+import type { ComponentProps } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
-import { CodeBlock, type CodeLine } from "./leaderboard-code-block";
+import { CodeBlock } from "@/components/ui/code-block";
 
 const leaderboardEntry = tv({
 	slots: {
@@ -46,41 +46,47 @@ type LeaderboardEntryProps = Omit<ComponentProps<"div">, "children"> &
 		score: number;
 		language: string;
 		lineCount: number;
-		code: CodeLine[];
+		code: string;
 	};
 
-const LeaderboardEntry = forwardRef<HTMLDivElement, LeaderboardEntryProps>(
-	({ className, rank, score, language, lineCount, code, ...props }, ref) => {
-		const rankVariant: 1 | 2 | 3 | "default" =
-			rank === 1 ? 1 : rank === 2 ? 2 : rank === 3 ? 3 : "default";
-		const styles = leaderboardEntry({ rank: rankVariant });
+async function LeaderboardEntry({
+	className,
+	rank,
+	score,
+	language,
+	lineCount,
+	code,
+	...props
+}: LeaderboardEntryProps) {
+	const rankVariant: 1 | 2 | 3 | "default" =
+		rank === 1 ? 1 : rank === 2 ? 2 : rank === 3 ? 3 : "default";
+	const styles = leaderboardEntry({ rank: rankVariant });
 
-		return (
-			<div ref={ref} className={styles.container({ className })} {...props}>
-				<div className={styles.metaRow()}>
-					<div className={styles.metaLeft()}>
-						<div className={styles.rankGroup()}>
-							<span className={styles.rankHash()}>#</span>
-							<span className={styles.rankNumber()}>{rank}</span>
-						</div>
-
-						<div className={styles.scoreGroup()}>
-							<span className={styles.scoreLabel()}>score:</span>
-							<span className={styles.scoreValue()}>{score.toFixed(1)}</span>
-						</div>
+	return (
+		<div className={styles.container({ className })} {...props}>
+			<div className={styles.metaRow()}>
+				<div className={styles.metaLeft()}>
+					<div className={styles.rankGroup()}>
+						<span className={styles.rankHash()}>#</span>
+						<span className={styles.rankNumber()}>{rank}</span>
 					</div>
 
-					<div className={styles.metaRight()}>
-						<span className={styles.language()}>{language}</span>
-						<span className={styles.lineCount()}>{lineCount} lines</span>
+					<div className={styles.scoreGroup()}>
+						<span className={styles.scoreLabel()}>score:</span>
+						<span className={styles.scoreValue()}>{score.toFixed(1)}</span>
 					</div>
 				</div>
 
-				<CodeBlock lines={code} height={120} />
+				<div className={styles.metaRight()}>
+					<span className={styles.language()}>{language}</span>
+					<span className={styles.lineCount()}>{lineCount} lines</span>
+				</div>
 			</div>
-		);
-	},
-);
+
+			<CodeBlock code={code} language={language} className="h-[120px]" />
+		</div>
+	);
+}
 
 LeaderboardEntry.displayName = "LeaderboardEntry";
 
