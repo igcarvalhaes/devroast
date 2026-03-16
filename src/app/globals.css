@@ -34,3 +34,27 @@
 	--color-text-tertiary: #4b5563;
 	--color-text-muted: #525252;
 }
+
+/* ── Scrollbar styles ────────────────────────────────── */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border-primary) transparent;
+}
+
+*::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: var(--color-border-primary);
+	border-radius: 0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: var(--color-border-hover);
+}

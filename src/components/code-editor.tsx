@@ -19,12 +19,20 @@ import { LANGUAGES, type Language } from "@/lib/languages";
 
 /* ── Context ─────────────────────────────────────────── */
 
+const MAX_CODE_LENGTH = 1000;
+
 type CodeEditorContextValue = {
 	code: string;
 	lineCount: number;
+	charCount: number;
+	maxChars: number;
+	isOverLimit: boolean;
 	handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 	handleKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+	handleScroll: () => void;
 	textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+	highlightRef: React.RefObject<HTMLDivElement | null>;
+	gutterRef: React.RefObject<HTMLButtonElement | null>;
 	handleGutterClick: () => void;
 	placeholder: string;
 	highlightedHtml: string;
@@ -54,9 +62,15 @@ const PLACEHOLDER_CODE = `function calculateTotal(items) {
 const CodeEditorContext = createContext<CodeEditorContextValue>({
 	code: "",
 	lineCount: 16,
+	charCount: 0,
+	maxChars: MAX_CODE_LENGTH,
+	isOverLimit: false,
 	handleChange: () => {},
 	handleKeyDown: () => {},
+	handleScroll: () => {},
 	textareaRef: { current: null },
+	highlightRef: { current: null },
+	gutterRef: { current: null },
 	handleGutterClick: () => {},
 	placeholder: PLACEHOLDER_CODE,
 	highlightedHtml: "",
@@ -92,6 +106,8 @@ type CodeEditorProps = ComponentProps<"div"> &
 type CodeEditorHeaderProps = ComponentProps<"div">;
 
 type CodeEditorBodyProps = ComponentProps<"div">;
+
+type CodeEditorFooterProps = ComponentProps<"div">;
 
 type CodeEditorGutterProps = ComponentProps<"button">;
 
@@ -293,7 +309,7 @@ const LanguageSelector = forwardRef<HTMLDivElement, LanguageSelectorProps>(
 									/>
 								</div>
 
-								<Combobox.List className="overflow-y-auto p-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border-primary">
+								<Combobox.List className="overflow-y-auto p-1">
 									{(item: Language) => (
 										<Combobox.Item
 											key={item.id}
@@ -370,13 +386,26 @@ CodeEditorHeader.displayName = "CodeEditorHeader";
 
 const CodeEditorGutter = forwardRef<HTMLButtonElement, CodeEditorGutterProps>(
 	({ className, children, ...props }, ref) => {
-		const { lineCount, handleGutterClick } = useCodeEditorContext();
+		const { lineCount, handleGutterClick, gutterRef } = useCodeEditorContext();
+
+		const setRefs = useCallback(
+			(node: HTMLButtonElement | null) => {
+				(gutterRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+				if (typeof ref === "function") {
+					ref(node);
+				} else if (ref) {
+					(ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+				}
+			},
+			[ref, gutterRef],
+		);
+
 		return (
 			<button
-				ref={ref}
+				ref={setRefs}
 				type="button"
 				className={[
-					"flex flex-col items-end w-12 shrink-0 bg-bg-surface border-r border-border-primary pt-4 px-3 cursor-text",
+					"flex flex-col items-end w-12 shrink-0 bg-bg-surface border-r border-border-primary pt-4 px-3 cursor-text overflow-hidden",
 					className,
 				]
 					.filter(Boolean)
@@ -407,7 +436,8 @@ CodeEditorGutter.displayName = "CodeEditorGutter";
 
 const CodeEditorTextarea = forwardRef<HTMLTextAreaElement, CodeEditorTextareaProps>(
 	({ className, ...props }, ref) => {
-		const { code, handleChange, handleKeyDown, textareaRef, placeholder } = useCodeEditorContext();
+		const { code, handleChange, handleKeyDown, handleScroll, textareaRef, placeholder } =
+			useCodeEditorContext();
 
 		// Merge refs: forward the external ref + keep internal textareaRef
 		const setRefs = useCallback(
@@ -428,14 +458,15 @@ const CodeEditorTextarea = forwardRef<HTMLTextAreaElement, CodeEditorTextareaPro
 				value={code}
 				onChange={handleChange}
 				onKeyDown={handleKeyDown}
+				onScroll={handleScroll}
 				placeholder={placeholder}
 				spellCheck={false}
 				className={[
 					"absolute inset-0 w-full h-full resize-none bg-transparent p-4",
 					"font-mono text-xs leading-[20px] text-transparent caret-text-primary",
-					"placeholder:text-text-muted",
+					"whitespace-pre overflow-auto",
+					"placeholder:text-text-muted placeholder:whitespace-pre-wrap",
 					"outline-none border-none",
-					"scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border-primary",
 					className,
 				]
 					.filter(Boolean)
@@ -450,19 +481,20 @@ CodeEditorTextarea.displayName = "CodeEditorTextarea";
 
 const CodeEditorContent = forwardRef<HTMLDivElement, CodeEditorContentProps>(
 	({ className, children, ...props }, ref) => {
-		const { highlightedHtml } = useCodeEditorContext();
+		const { highlightedHtml, highlightRef } = useCodeEditorContext();
 
 		return (
 			<div
 				ref={ref}
-				className={["relative flex-1 overflow-auto", className].filter(Boolean).join(" ")}
+				className={["relative flex-1 overflow-hidden", className].filter(Boolean).join(" ")}
 				{...props}
 			>
 				{children ?? (
 					<>
-						{/* Highlight layer (behind) */}
+						{/* Highlight layer (behind) — scroll driven by textarea via handleScroll */}
 						<div
-							className="absolute inset-0 p-4 font-mono text-xs leading-[20px] pointer-events-none overflow-hidden [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0 [&_code]:!bg-transparent"
+							ref={highlightRef}
+							className="absolute inset-0 p-4 font-mono text-xs leading-[20px] pointer-events-none overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0 [&_code]:!bg-transparent [&_pre]:!whitespace-pre [&_code]:!whitespace-pre"
 							aria-hidden="true"
 							// biome-ignore lint/security/noDangerouslySetInnerHtml: shiki output is safe HTML
 							dangerouslySetInnerHTML={{ __html: highlightedHtml }}
@@ -496,6 +528,40 @@ const CodeEditorBody = forwardRef<HTMLDivElement, CodeEditorBodyProps>(
 
 CodeEditorBody.displayName = "CodeEditorBody";
 
+const CodeEditorFooter = forwardRef<HTMLDivElement, CodeEditorFooterProps>(
+	({ className, children, ...props }, ref) => {
+		const { charCount, maxChars, isOverLimit } = useCodeEditorContext();
+
+		return (
+			<div
+				ref={ref}
+				className={[
+					"flex items-center justify-end h-8 px-4 border-t border-border-primary shrink-0",
+					className,
+				]
+					.filter(Boolean)
+					.join(" ")}
+				{...props}
+			>
+				{children ?? (
+					<span
+						className={[
+							"font-mono text-[11px]",
+							isOverLimit ? "text-accent-red" : "text-text-tertiary",
+						]
+							.filter(Boolean)
+							.join(" ")}
+					>
+						{charCount} / {maxChars}
+					</span>
+				)}
+			</div>
+		);
+	},
+);
+
+CodeEditorFooter.displayName = "CodeEditorFooter";
+
 /* ── Root ────────────────────────────────────────────── */
 
 const CodeEditor = forwardRef<HTMLDivElement, CodeEditorProps>(
@@ -515,6 +581,8 @@ const CodeEditor = forwardRef<HTMLDivElement, CodeEditorProps>(
 		const [internalValue, setInternalValue] = useState("");
 		const [userLanguage, setUserLanguage] = useState<string | null>(language ?? null);
 		const textareaRef = useRef<HTMLTextAreaElement>(null);
+		const highlightRef = useRef<HTMLDivElement>(null);
+		const gutterRef = useRef<HTMLButtonElement>(null);
 
 		const code = value ?? internalValue;
 		const lineCount = Math.max(code.split("\n").length, 16);
@@ -548,6 +616,19 @@ const CodeEditor = forwardRef<HTMLDivElement, CodeEditorProps>(
 			textareaRef.current?.focus();
 		}, []);
 
+		const handleScroll = useCallback(() => {
+			const textarea = textareaRef.current;
+			if (!textarea) return;
+			const { scrollTop, scrollLeft } = textarea;
+			if (highlightRef.current) {
+				highlightRef.current.scrollTop = scrollTop;
+				highlightRef.current.scrollLeft = scrollLeft;
+			}
+			if (gutterRef.current) {
+				gutterRef.current.scrollTop = scrollTop;
+			}
+		}, []);
+
 		const handleLanguageChange = useCallback(
 			(lang: string | null) => {
 				setUserLanguage(lang);
@@ -556,12 +637,21 @@ const CodeEditor = forwardRef<HTMLDivElement, CodeEditorProps>(
 			[onLanguageChange],
 		);
 
+		const charCount = code.length;
+		const isOverLimit = charCount > MAX_CODE_LENGTH;
+
 		const ctx: CodeEditorContextValue = {
 			code,
 			lineCount,
+			charCount,
+			maxChars: MAX_CODE_LENGTH,
+			isOverLimit,
 			handleChange,
 			handleKeyDown,
+			handleScroll,
 			textareaRef,
+			highlightRef,
+			gutterRef,
 			handleGutterClick,
 			placeholder: placeholder ?? PLACEHOLDER_CODE,
 			highlightedHtml,
@@ -578,6 +668,7 @@ const CodeEditor = forwardRef<HTMLDivElement, CodeEditorProps>(
 						<>
 							<CodeEditorHeader />
 							<CodeEditorBody />
+							<CodeEditorFooter />
 						</>
 					)}
 				</div>
@@ -592,15 +683,18 @@ export {
 	CodeEditor,
 	CodeEditorHeader,
 	CodeEditorBody,
+	CodeEditorFooter,
 	CodeEditorGutter,
 	CodeEditorTextarea,
 	CodeEditorContent,
 	LanguageSelector,
 	codeEditor,
+	MAX_CODE_LENGTH,
 	type CodeEditorProps,
 	type CodeEditorVariants,
 	type CodeEditorHeaderProps,
 	type CodeEditorBodyProps,
+	type CodeEditorFooterProps,
 	type CodeEditorGutterProps,
 	type CodeEditorTextareaProps,
 	type CodeEditorContentProps,
