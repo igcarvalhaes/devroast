@@ -16,7 +16,7 @@ export default async function LeaderboardPage({
 	searchParams: Promise<{ page?: string }>;
 }) {
 	const { page } = await searchParams;
-	const pageNumber = Number(page ?? "1");
+	const pageNumber = Number(page) || 1;
 
 	void prefetch(trpc.roast.getLeaderboard.queryOptions({ page: pageNumber, limit: 20 }));
 	void prefetch(trpc.roast.getHomeMetrics.queryOptions());
@@ -36,17 +36,7 @@ export default async function LeaderboardPage({
 							{"// the most roasted code on the internet"}
 						</p>
 
-						<Suspense
-							fallback={
-								<div className="flex items-center gap-2">
-									<span className="font-body-mono text-xs text-text-tertiary">
-										loading stats...
-									</span>
-								</div>
-							}
-						>
-							<LeaderboardMetrics />
-						</Suspense>
+						<LeaderboardMetrics />
 					</div>
 
 					{/* Leaderboard Entries */}
