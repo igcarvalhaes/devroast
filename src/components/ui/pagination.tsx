@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
 import { type ComponentProps, forwardRef } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
 import { Button, button } from "./button";
@@ -12,35 +11,27 @@ const pagination = tv({
 
 type PaginationVariants = VariantProps<typeof pagination>;
 
-type PaginationProps = ComponentProps<"div"> &
+type PaginationProps = ComponentProps<"nav"> &
 	PaginationVariants & {
 		currentPage: number;
 		totalPages: number;
+		buildHref: (page: number) => string;
 	};
 
-const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
-	({ currentPage, totalPages, className, ...props }, ref) => {
-		const pathname = usePathname();
-		const searchParams = useSearchParams();
-
-		const createPageUrl = (pageNumber: number) => {
-			const params = new URLSearchParams(searchParams?.toString());
-			params.set("page", pageNumber.toString());
-			return `${pathname}?${params.toString()}`;
-		};
-
+const Pagination = forwardRef<HTMLElement, PaginationProps>(
+	({ currentPage, totalPages, buildHref, className, ...props }, ref) => {
 		const isFirstPage = currentPage <= 1;
 		const isLastPage = currentPage >= totalPages;
 
 		return (
-			<div ref={ref} className={pagination({ className })} {...props}>
+			<nav ref={ref} className={pagination({ className })} aria-label="pagination" {...props}>
 				{isFirstPage ? (
 					<Button variant="outline" size="sm" disabled aria-label="Previous page">
 						Previous
 					</Button>
 				) : (
 					<Link
-						href={createPageUrl(currentPage - 1)}
+						href={buildHref(currentPage - 1)}
 						className={button({ variant: "outline", size: "sm" })}
 						aria-label="Previous page"
 					>
@@ -58,14 +49,14 @@ const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
 					</Button>
 				) : (
 					<Link
-						href={createPageUrl(currentPage + 1)}
+						href={buildHref(currentPage + 1)}
 						className={button({ variant: "outline", size: "sm" })}
 						aria-label="Next page"
 					>
 						Next
 					</Link>
 				)}
-			</div>
+			</nav>
 		);
 	},
 );
