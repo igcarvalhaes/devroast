@@ -10,15 +10,12 @@ const collapsibleCodeRow = tv({
 	slots: {
 		root: "overflow-hidden border-t border-border-primary bg-bg-input",
 
-		// Content wrapper (scrollable quando collapsed)
-		content: [
-			"overflow-hidden transition-all duration-300 ease-in-out",
-			"data-[state=closed]:max-h-[120px]",
-			"data-[state=open]:max-h-none",
+		// Code display area com max-height condicional
+		codeWrapper: [
+			"flex overflow-hidden transition-all duration-300 ease-in-out",
+			"group-data-[state=closed]:max-h-[120px]",
+			"group-data-[state=open]:max-h-none",
 		],
-
-		// Code display area
-		codeWrapper: "flex",
 
 		// Line numbers column
 		lineNumbers: [
@@ -64,10 +61,10 @@ const CollapsibleCodeRow = forwardRef<HTMLDivElement, CollapsibleCodeRowProps>(
 		const styles = collapsibleCodeRow();
 
 		return (
-			<Collapsible.Root defaultOpen={defaultOpen}>
+			<Collapsible.Root defaultOpen={defaultOpen} className="group">
 				<div ref={ref} className={styles.root({ className })} {...props}>
 					{/* Collapsible Panel */}
-					<Collapsible.Panel className={styles.content()}>
+					<Collapsible.Panel>
 						<div className={styles.codeWrapper()}>
 							{/* Line numbers */}
 							<div className={styles.lineNumbers()}>
@@ -89,10 +86,10 @@ const CollapsibleCodeRow = forwardRef<HTMLDivElement, CollapsibleCodeRowProps>(
 					{/* Toggle button (sempre visível) */}
 					<Collapsible.Trigger className={styles.footer()}>
 						<span className={styles.toggleButton()}>
-							<span className="data-[state=closed]:inline data-[state=open]:hidden">
+							<span className="group-data-[state=closed]:inline group-data-[state=open]:hidden">
 								show more ↓
 							</span>
-							<span className="data-[state=closed]:hidden data-[state=open]:inline">
+							<span className="group-data-[state=closed]:hidden group-data-[state=open]:inline">
 								show less ↑
 							</span>
 						</span>
