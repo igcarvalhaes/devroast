@@ -28,10 +28,8 @@ export default async function LeaderboardPage({
 					{/* Hero Section */}
 					<div className="flex flex-col gap-4 w-full">
 						<div className="flex items-center gap-3">
-							<span className="font-mono text-[32px] font-bold text-accent-green">{">"}</span>
-							<h1 className="font-mono text-[28px] font-bold text-text-primary">
-								shame_leaderboard
-							</h1>
+							<span className="font-mono text-3xl font-bold text-accent-green">{">"}</span>
+							<h1 className="font-mono text-2xl font-bold text-text-primary">shame_leaderboard</h1>
 						</div>
 
 						<p className="font-body-mono text-sm text-text-secondary">
