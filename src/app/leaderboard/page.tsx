@@ -1,71 +1,24 @@
 import type { Metadata } from "next";
-import { LeaderboardEntry } from "@/components/leaderboard-entry";
+import { Suspense } from "react";
+import { LeaderboardList } from "@/components/leaderboard-list";
+import { LeaderboardSkeleton } from "@/components/ui/leaderboard-skeleton";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
 export const metadata: Metadata = {
 	title: "Shame Leaderboard | devroast",
 	description: "The most roasted code on the internet",
 };
 
-interface LeaderboardData {
-	rank: number;
-	score: number;
-	language: string;
-	lineCount: number;
-	code: string;
-}
+export default async function LeaderboardPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ page?: string }>;
+}) {
+	const { page } = await searchParams;
+	const pageNumber = Number(page ?? "1");
 
-// Dados estáticos de exemplo
-const leaderboardData: LeaderboardData[] = [
-	{
-		rank: 1,
-		score: 1.2,
-		language: "javascript",
-		lineCount: 3,
-		code: `eval(prompt("enter code"))
-document.write(response)
-// trust the user lol`,
-	},
-	{
-		rank: 2,
-		score: 1.8,
-		language: "python",
-		lineCount: 4,
-		code: `def secure_password():
-    return "123456"
+	void prefetch(trpc.roast.getLeaderboard.queryOptions({ page: pageNumber, limit: 20 }));
 
-# TODO: make it more secure later`,
-	},
-	{
-		rank: 3,
-		score: 2.3,
-		language: "typescript",
-		lineCount: 3,
-		code: `const isProduction = true;
-if (isProduction) console.log(error);
-// errors are features`,
-	},
-	{
-		rank: 4,
-		score: 2.9,
-		language: "java",
-		lineCount: 5,
-		code: `public void processData() {
-    try {
-        // TODO: implement this
-    } catch (Exception e) {}
-}`,
-	},
-	{
-		rank: 5,
-		score: 3.4,
-		language: "php",
-		lineCount: 2,
-		code: `$password = $_GET['pwd'];
-mysqli_query("SELECT * FROM users WHERE pass=$password");`,
-	},
-];
-
-export default function LeaderboardPage() {
 	return (
 		<main className="flex flex-col w-full bg-bg-page px-20 py-10">
 			<div className="flex flex-col w-full gap-10">
@@ -88,18 +41,11 @@ export default function LeaderboardPage() {
 				</div>
 
 				{/* Leaderboard Entries */}
-				<div className="flex flex-col gap-5 w-full">
-					{leaderboardData.map((entry) => (
-						<LeaderboardEntry
-							key={entry.rank}
-							rank={entry.rank}
-							score={entry.score}
-							language={entry.language}
-							lineCount={entry.lineCount}
-							code={entry.code}
-						/>
-					))}
-				</div>
+				<HydrateClient>
+					<Suspense fallback={<LeaderboardSkeleton />}>
+						<LeaderboardList page={pageNumber} />
+					</Suspense>
+				</HydrateClient>
 			</div>
 		</main>
 	);
