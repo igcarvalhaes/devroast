@@ -1,5 +1,6 @@
 import { and, asc, avg, count, eq, isNotNull } from "drizzle-orm";
 import { codeToHtml } from "shiki";
+import { z } from "zod";
 import { db } from "@/db";
 import { roasts, submissions } from "@/db/schema";
 import { createTRPCRouter, publicProcedure } from "../init";
@@ -87,4 +88,81 @@ export const roastRouter = createTRPCRouter({
 			totalRoasts: Number(totalRoasts),
 		};
 	}),
+
+	/**
+	 * Query publica — retorna leaderboard paginado
+	 */
+	getLeaderboard: publicProcedure
+		.input(
+			z.object({
+				page: z.number().min(1).default(1),
+				limit: z.number().min(1).max(100).default(20),
+			}),
+		)
+		.query(async ({ input }) => {
+			const { page, limit } = input;
+			const offset = (page - 1) * limit;
+
+			// Executar queries em paralelo com Promise.all
+			const [items, totalCountResult] = await Promise.all([
+				// Query 1: buscar roasts paginados
+				db
+					.select({
+						id: roasts.id,
+						score: roasts.score,
+						code: submissions.code,
+						language: submissions.language,
+						createdAt: roasts.createdAt,
+					})
+					.from(roasts)
+					.innerJoin(submissions, eq(roasts.submissionId, submissions.id))
+					.where(and(eq(roasts.status, "completed"), isNotNull(roasts.score)))
+					.orderBy(asc(roasts.score))
+					.limit(limit)
+					.offset(offset),
+
+				// Query 2: buscar total de roasts no leaderboard
+				db
+					.select({ count: count() })
+					.from(roasts)
+					.where(and(eq(roasts.status, "completed"), isNotNull(roasts.score))),
+			]);
+
+			const total = totalCountResult[0]?.count ?? 0;
+			const totalPages = Math.ceil(Number(total) / limit);
+
+			// Processar cada roast para gerar HTML completo do código
+			const leaderboard = await Promise.all(
+				items.map(async (roast, index) => {
+					// Gerar HTML com syntax highlighting
+					const codeHtml = await codeToHtml(roast.code.trim(), {
+						lang: roast.language,
+						theme: "vesper",
+					});
+
+					const lineCount = roast.code.trim().split("\n").length;
+
+					return {
+						id: roast.id,
+						rank: offset + index + 1,
+						score: roast.score ? roast.score.toFixed(1) : "0.0",
+						code: roast.code.trim(),
+						codeHtml,
+						lineCount,
+						language: roast.language,
+						createdAt: roast.createdAt,
+					};
+				}),
+			);
+
+			return {
+				data: leaderboard,
+				metadata: {
+					total: Number(total),
+					totalPages,
+					page,
+					limit,
+				},
+			};
+		}),
 });
