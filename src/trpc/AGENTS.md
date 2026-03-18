@@ -180,6 +180,108 @@ export type AppRouter = typeof appRouter;
 
 ---
 
+## Queries Paralelas com Promise.all
+
+Quando um procedure precisa executar múltiplas queries independentes ao banco de dados, **sempre usar `Promise.all`** para executá-las em paralelo e melhorar a performance.
+
+### Exemplo: Múltiplas queries independentes
+
+```typescript
+export const roastRouter = createTRPCRouter({
+  /**
+   * Query: retorna métricas da homepage
+   */
+  getHomeMetrics: publicProcedure.query(async () => {
+    // ✅ CORRETO: Executar queries em paralelo com Promise.all
+    const [totalRoastsResult, avgScoreResult] = await Promise.all([
+      // Query 1: COUNT total de roasts completed
+      db.select({ count: count() })
+        .from(roasts)
+        .where(eq(roasts.status, "completed")),
+
+      // Query 2: AVG score de roasts completed
+      db.select({ avg: avg(roasts.score) })
+        .from(roasts)
+        .where(and(eq(roasts.status, "completed"), isNotNull(roasts.score))),
+    ]);
+
+    const totalRoasts = totalRoastsResult[0]?.count ?? 0;
+    const avgScore = avgScoreResult[0]?.avg ?? 0;
+
+    return {
+      totalRoasts: Number(totalRoasts),
+      avgScore: Number(avgScore),
+    };
+  }),
+});
+```
+
+### ❌ Anti-pattern: Queries sequenciais
+
+```typescript
+// EVITAR: Queries executadas em sequência (lento)
+const totalRoastsResult = await db
+  .select({ count: count() })
+  .from(roasts)
+  .where(eq(roasts.status, "completed"));
+
+const avgScoreResult = await db
+  .select({ avg: avg(roasts.score) })
+  .from(roasts)
+  .where(and(eq(roasts.status, "completed"), isNotNull(roasts.score)));
+```
+
+### Quando usar Promise.all
+
+✅ **Usar quando:**
+- Queries são independentes (uma não depende do resultado da outra)
+- Queries diferentes a tabelas diferentes
+- Agregações e contagens em paralelo
+- Combinação de query principal + query de count para paginação
+
+❌ **NÃO usar quando:**
+- Uma query depende do resultado da outra (ex: buscar user, depois buscar seus posts)
+- Queries com efeitos colaterais ou locks de transação
+- Mutations que precisam ser ordenadas (ex: criar user → criar perfil)
+
+### Exemplo: Query principal + count para paginação
+
+```typescript
+export const roastRouter = createTRPCRouter({
+  /**
+   * Query: lista roasts paginados
+   */
+  list: publicProcedure
+    .input(z.object({ page: z.number().min(1).default(1) }))
+    .query(async ({ input }) => {
+      const limit = 10;
+      const offset = (input.page - 1) * limit;
+
+      // Executar query principal + count em paralelo
+      const [items, totalCountResult] = await Promise.all([
+        db.select().from(roasts).limit(limit).offset(offset),
+        db.select({ count: count() }).from(roasts),
+      ]);
+
+      const totalCount = totalCountResult[0]?.count ?? 0;
+
+      return {
+        items,
+        totalCount: Number(totalCount),
+        page: input.page,
+        totalPages: Math.ceil(Number(totalCount) / limit),
+      };
+    }),
+});
+```
+
+**Benefícios:**
+- Reduz latência total (queries executam simultaneamente)
+- Melhor aproveitamento de conexões do pool
+- Código mais limpo e declarativo
+
+---
+
 ## Client Components (`client.tsx`)
 
 ### Provider

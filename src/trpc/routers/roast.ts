@@ -9,17 +9,17 @@ export const roastRouter = createTRPCRouter({
 	 * Query publica — retorna metricas da homepage
 	 */
 	getHomeMetrics: publicProcedure.query(async () => {
-		// Query 1: COUNT total de roasts completed
-		const totalRoastsResult = await db
-			.select({ count: count() })
-			.from(roasts)
-			.where(eq(roasts.status, "completed"));
+		// Executar queries em paralelo com Promise.all
+		const [totalRoastsResult, avgScoreResult] = await Promise.all([
+			// Query 1: COUNT total de roasts completed
+			db.select({ count: count() }).from(roasts).where(eq(roasts.status, "completed")),
 
-		// Query 2: AVG score de roasts completed com score nao-null
-		const avgScoreResult = await db
-			.select({ avg: avg(roasts.score) })
-			.from(roasts)
-			.where(and(eq(roasts.status, "completed"), isNotNull(roasts.score)));
+			// Query 2: AVG score de roasts completed com score nao-null
+			db
+				.select({ avg: avg(roasts.score) })
+				.from(roasts)
+				.where(and(eq(roasts.status, "completed"), isNotNull(roasts.score))),
+		]);
 
 		const totalRoasts = totalRoastsResult[0]?.count ?? 0;
 		const avgScoreValue = avgScoreResult[0]?.avg;
@@ -37,19 +37,25 @@ export const roastRouter = createTRPCRouter({
 	 * Query publica — retorna os 3 piores roasts (menores scores)
 	 */
 	getTopWorstRoasts: publicProcedure.query(async () => {
-		// Query: buscar os 3 roasts com menores scores (completed e com score)
-		const worstRoasts = await db
-			.select({
-				id: roasts.id,
-				score: roasts.score,
-				code: submissions.code,
-				language: submissions.language,
-			})
-			.from(roasts)
-			.innerJoin(submissions, eq(roasts.submissionId, submissions.id))
-			.where(and(eq(roasts.status, "completed"), isNotNull(roasts.score)))
-			.orderBy(asc(roasts.score))
-			.limit(3);
+		// Executar queries em paralelo com Promise.all
+		const [worstRoasts, totalRoastsResult] = await Promise.all([
+			// Query 1: buscar os 3 roasts com menores scores (completed e com score)
+			db
+				.select({
+					id: roasts.id,
+					score: roasts.score,
+					code: submissions.code,
+					language: submissions.language,
+				})
+				.from(roasts)
+				.innerJoin(submissions, eq(roasts.submissionId, submissions.id))
+				.where(and(eq(roasts.status, "completed"), isNotNull(roasts.score)))
+				.orderBy(asc(roasts.score))
+				.limit(3),
+
+			// Query 2: buscar total de roasts para o rodapé
+			db.select({ count: count() }).from(roasts).where(eq(roasts.status, "completed")),
+		]);
 
 		// Processar cada roast para truncar e gerar HTML
 		const leaderboard = await Promise.all(
@@ -80,12 +86,6 @@ export const roastRouter = createTRPCRouter({
 				};
 			}),
 		);
-
-		// Buscar total de roasts para o rodapé
-		const totalRoastsResult = await db
-			.select({ count: count() })
-			.from(roasts)
-			.where(eq(roasts.status, "completed"));
 
 		const totalRoasts = totalRoastsResult[0]?.count ?? 0;
 
