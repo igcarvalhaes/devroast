@@ -156,13 +156,10 @@ export const roastRouter = createTRPCRouter({
 			);
 
 			return {
-				data: leaderboard,
-				metadata: {
-					total: Number(total),
-					totalPages,
-					page,
-					limit,
-				},
+				items: leaderboard,
+				totalCount: Number(total),
+				totalPages,
+				currentPage: page,
 			};
 		}),
 });
