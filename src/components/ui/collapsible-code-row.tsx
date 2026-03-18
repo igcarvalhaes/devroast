@@ -33,9 +33,10 @@ const collapsibleCodeRow = tv({
 
 		// Footer com botão toggle
 		footer: [
-			"flex items-center justify-center",
-			"h-8 border-t border-border-primary bg-bg-surface",
+			"flex w-full items-center justify-center",
+			"h-9 border-t border-border-primary bg-bg-surface",
 			"hover:bg-bg-input transition-colors cursor-pointer",
+			"focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-primary",
 		],
 
 		toggleButton: [
