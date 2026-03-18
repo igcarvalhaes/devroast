@@ -12,9 +12,9 @@ const collapsibleCodeRow = tv({
 
 		// Code display area com max-height condicional
 		codeWrapper: [
-			"flex overflow-y-auto transition-all duration-300 ease-in-out",
-			"group-data-[state=closed]:max-h-[120px]",
-			"group-data-[state=open]:max-h-none",
+			"flex overflow-hidden transition-all duration-300 ease-in-out",
+			"group-data-[closed]:max-h-[84px]",
+			"group-data-[open]:max-h-none",
 		],
 
 		// Line numbers column
@@ -59,37 +59,56 @@ type CollapsibleCodeRowProps = Omit<ComponentProps<"div">, "children"> & {
 const CollapsibleCodeRow = forwardRef<HTMLDivElement, CollapsibleCodeRowProps>(
 	({ className, codeHtml, lineCount, language, defaultOpen = false, ...props }, ref) => {
 		const styles = collapsibleCodeRow();
+		const isLongCode = lineCount >= 5;
+
+		if (!isLongCode) {
+			return (
+				<div ref={ref} className={styles.root({ className })} {...props}>
+					<div className={styles.codeWrapper({ className: "max-h-none" })}>
+						<div className={styles.lineNumbers()}>
+							{Array.from({ length: lineCount }, (_, i) => (
+								// biome-ignore lint/suspicious/noArrayIndexKey: static
+								<span key={i}>{i + 1}</span>
+							))}
+						</div>
+						<div
+							className={styles.codeContent()}
+							// biome-ignore lint/security/noDangerouslySetInnerHtml: safe
+							dangerouslySetInnerHTML={{ __html: codeHtml }}
+						/>
+					</div>
+				</div>
+			);
+		}
 
 		return (
 			<Collapsible.Root defaultOpen={defaultOpen} className="group">
 				<div ref={ref} className={styles.root({ className })} {...props}>
-					{/* Collapsible Panel - keepMounted para manter no DOM quando collapsed */}
-					<Collapsible.Panel keepMounted>
-						<div className={styles.codeWrapper()}>
-							{/* Line numbers */}
-							<div className={styles.lineNumbers()}>
-								{Array.from({ length: lineCount }, (_, i) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: line numbers are static and never reorder
-									<span key={i}>{i + 1}</span>
-								))}
-							</div>
-
-							{/* Code com syntax highlighting do Shiki */}
-							<div
-								className={styles.codeContent()}
-								// biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki output is safe server-side HTML
-								dangerouslySetInnerHTML={{ __html: codeHtml }}
-							/>
+					{/* Removed Collapsible.Panel to allow partial visibility (preview) via CSS */}
+					<div className={styles.codeWrapper()}>
+						{/* Line numbers */}
+						<div className={styles.lineNumbers()}>
+							{Array.from({ length: lineCount }, (_, i) => (
+								// biome-ignore lint/suspicious/noArrayIndexKey: static
+								<span key={i}>{i + 1}</span>
+							))}
 						</div>
-					</Collapsible.Panel>
 
-					{/* Toggle button (sempre visível) */}
+						{/* Code content */}
+						<div
+							className={styles.codeContent()}
+							// biome-ignore lint/security/noDangerouslySetInnerHtml: safe
+							dangerouslySetInnerHTML={{ __html: codeHtml }}
+						/>
+					</div>
+
+					{/* Toggle button */}
 					<Collapsible.Trigger className={styles.footer()}>
 						<span className={styles.toggleButton()}>
-							<span className="group-data-[state=closed]:inline group-data-[state=open]:hidden">
+							<span className="group-data-[closed]:inline group-data-[open]:hidden">
 								show more ↓
 							</span>
-							<span className="group-data-[state=closed]:hidden group-data-[state=open]:inline">
+							<span className="group-data-[closed]:hidden group-data-[open]:inline">
 								show less ↑
 							</span>
 						</span>
