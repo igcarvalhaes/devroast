@@ -8,11 +8,11 @@ import { tv } from "tailwind-variants";
 
 const collapsibleCodeRow = tv({
 	slots: {
-		root: "overflow-hidden border-t border-border-primary bg-bg-input",
+		root: "border-t border-border-primary bg-bg-input",
 
 		// Code display area com max-height condicional
 		codeWrapper: [
-			"flex overflow-hidden transition-all duration-300 ease-in-out",
+			"flex overflow-y-auto transition-all duration-300 ease-in-out",
 			"group-data-[state=closed]:max-h-[120px]",
 			"group-data-[state=open]:max-h-none",
 		],
@@ -63,8 +63,8 @@ const CollapsibleCodeRow = forwardRef<HTMLDivElement, CollapsibleCodeRowProps>(
 		return (
 			<Collapsible.Root defaultOpen={defaultOpen} className="group">
 				<div ref={ref} className={styles.root({ className })} {...props}>
-					{/* Collapsible Panel */}
-					<Collapsible.Panel>
+					{/* Collapsible Panel - keepMounted para manter no DOM quando collapsed */}
+					<Collapsible.Panel keepMounted>
 						<div className={styles.codeWrapper()}>
 							{/* Line numbers */}
 							<div className={styles.lineNumbers()}>
