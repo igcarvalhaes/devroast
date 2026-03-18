@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { type ComponentProps, forwardRef } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
