@@ -2,6 +2,7 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { CollapsibleCodeRow } from "@/components/ui/collapsible-code-row";
 import { useTRPC } from "@/trpc/client";
 import { button } from "./ui/button";
 
@@ -34,46 +35,60 @@ export function ShameLeaderboard() {
 				{"// the worst code on the internet, ranked by shame"}
 			</p>
 
-			{/* Table */}
-			<div className="flex flex-col border border-border-primary w-full">
-				{/* Header */}
-				<div className="flex items-center h-10 px-5 bg-bg-surface border-b border-border-primary">
-					<span className="w-[50px] font-mono text-xs font-medium text-text-tertiary">#</span>
-					<span className="w-[70px] font-mono text-xs font-medium text-text-tertiary">score</span>
-					<span className="flex-1 font-mono text-xs font-medium text-text-tertiary">code</span>
-					<span className="w-[100px] font-mono text-xs font-medium text-text-tertiary">lang</span>
-				</div>
+			{/* Leaderboard Cards */}
+			<div className="flex flex-col gap-5 w-full">
+				{data.leaderboard.map((entry) => {
+					// Determinar cor do rank (gold/silver/bronze)
+					const rankColor =
+						entry.rank === 1
+							? "text-accent-amber"
+							: entry.rank === 2
+								? "text-[#C0C0C0]"
+								: entry.rank === 3
+									? "text-[#CD7F32]"
+									: "text-text-primary";
 
-				{/* Data Rows */}
-				{data.leaderboard.map((row, rowIndex) => (
-					<div
-						key={row.id}
-						className={[
-							"flex items-start px-5 py-4",
-							rowIndex < data.leaderboard.length - 1 ? "border-b border-border-primary" : "",
-						].join(" ")}
-					>
-						<span
-							className={`w-[50px] font-mono text-xs ${
-								row.rank === 1 ? "text-accent-amber" : "text-text-secondary"
-							}`}
-						>
-							{row.rank}
-						</span>
-						<span className="w-[70px] font-mono text-xs font-bold text-accent-red">
-							{row.score}
-						</span>
+					return (
+						<div key={entry.id} className="flex flex-col w-full border border-border-primary">
+							{/* Meta Row */}
+							<div className="flex items-center justify-between h-12 px-5 border-b border-border-primary">
+								<div className="flex items-center gap-4">
+									{/* Rank */}
+									<div className="flex items-center gap-1.5">
+										<span className="font-mono text-[13px] text-text-tertiary">#</span>
+										<span className={`font-mono text-[13px] font-bold ${rankColor}`}>
+											{entry.rank}
+										</span>
+									</div>
 
-						{/* Code com syntax highlighting do Shiki */}
-						<div
-							className="flex-1 font-mono text-xs leading-snug [&_pre]:!bg-transparent [&_pre]:!p-0 [&_code]:!bg-transparent [&_.line]:block"
-							// biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki output is safe server-side HTML
-							dangerouslySetInnerHTML={{ __html: row.codeHtml }}
-						/>
+									{/* Score */}
+									<div className="flex items-center gap-1.5">
+										<span className="font-mono text-xs text-text-tertiary">score:</span>
+										<span className="font-mono text-[13px] font-bold text-accent-red">
+											{entry.score}
+										</span>
+									</div>
+								</div>
 
-						<span className="w-[100px] font-mono text-xs text-text-secondary">{row.language}</span>
-					</div>
-				))}
+								{/* Language + Lines */}
+								<div className="flex items-center gap-3">
+									<span className="font-mono text-xs text-text-secondary">{entry.language}</span>
+									<span className="font-mono text-xs text-text-tertiary">
+										{entry.lineCount} lines
+									</span>
+								</div>
+							</div>
+
+							{/* Collapsible Code */}
+							<CollapsibleCodeRow
+								codeHtml={entry.codeHtml}
+								lineCount={entry.lineCount}
+								language={entry.language}
+								defaultOpen={false}
+							/>
+						</div>
+					);
+				})}
 			</div>
 
 			{/* Footer com métricas */}

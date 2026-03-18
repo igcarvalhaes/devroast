@@ -34,7 +34,7 @@ export const roastRouter = createTRPCRouter({
 	}),
 
 	/**
-	 * Query publica — retorna os 3 piores roasts (menores scores)
+	 * Query publica — retorna os 3 piores roasts (menores scores) com código completo
 	 */
 	getTopWorstRoasts: publicProcedure.query(async () => {
 		// Executar queries em paralelo com Promise.all
@@ -57,31 +57,24 @@ export const roastRouter = createTRPCRouter({
 			db.select({ count: count() }).from(roasts).where(eq(roasts.status, "completed")),
 		]);
 
-		// Processar cada roast para truncar e gerar HTML
+		// Processar cada roast para gerar HTML completo do código
 		const leaderboard = await Promise.all(
 			worstRoasts.map(async (roast, index) => {
-				const lines = roast.code.trim().split("\n");
-				const truncatedLines = lines.slice(0, 3);
-				const truncatedCode = truncatedLines.join("\n");
-
-				// Detectar qual linha é comentário
-				const commentIndex = truncatedLines.findIndex((line) =>
-					isCommentLine(line.trim(), roast.language),
-				);
-
-				// Gerar HTML com syntax highlighting
-				const codeHtml = await codeToHtml(truncatedCode, {
+				// Gerar HTML com syntax highlighting para o código completo
+				const codeHtml = await codeToHtml(roast.code.trim(), {
 					lang: roast.language,
 					theme: "vesper",
 				});
+
+				const lineCount = roast.code.trim().split("\n").length;
 
 				return {
 					id: roast.id,
 					rank: index + 1,
 					score: roast.score ? roast.score.toFixed(1) : "0.0",
+					code: roast.code.trim(),
 					codeHtml,
-					lines: truncatedLines,
-					commentIndex,
+					lineCount,
 					language: roast.language,
 				};
 			}),
@@ -95,30 +88,3 @@ export const roastRouter = createTRPCRouter({
 		};
 	}),
 });
-
-/**
- * Helper para detectar se uma linha é comentário
- */
-function isCommentLine(line: string, language: string): boolean {
-	// JavaScript/TypeScript/Java/C#/Go/Rust
-	if (["javascript", "typescript", "java", "csharp", "go", "rust"].includes(language)) {
-		return line.startsWith("//") || line.startsWith("/*");
-	}
-
-	// Python
-	if (language === "python") {
-		return line.startsWith("#");
-	}
-
-	// SQL
-	if (language === "sql") {
-		return line.startsWith("--");
-	}
-
-	// HTML/CSS
-	if (["html", "css"].includes(language)) {
-		return line.startsWith("<!--") || line.startsWith("/*");
-	}
-
-	return false;
-}
