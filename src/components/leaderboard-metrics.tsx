@@ -6,30 +6,22 @@ import { useTRPC } from "@/trpc/client";
 
 export function LeaderboardMetrics() {
 	const trpc = useTRPC();
-	const { data, isLoading, isError } = useQuery(trpc.roast.getHomeMetrics.queryOptions());
+	const { data, isError } = useQuery(trpc.roast.getHomeMetrics.queryOptions());
 
-	if (isLoading) {
-		return (
-			<div className="flex items-center gap-2">
-				<span className="font-body-mono text-xs text-text-tertiary">loading stats...</span>
-			</div>
-		);
-	}
-
-	if (isError || !data) {
+	if (isError) {
 		return null;
 	}
 
 	return (
 		<div className="flex items-center gap-2">
 			<span className="font-body-mono text-xs text-text-tertiary">
-				<NumberFlow value={data.totalRoasts} /> submissions
+				<NumberFlow value={data?.totalRoasts ?? 0} /> submissions
 			</span>
 			<span className="font-body-mono text-xs text-text-tertiary">·</span>
 			<span className="font-body-mono text-xs text-text-tertiary">
 				avg score:{" "}
 				<NumberFlow
-					value={data.avgScore}
+					value={data?.avgScore ?? 0}
 					format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
 				/>
 				/10

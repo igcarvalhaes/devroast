@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { LeaderboardList } from "@/components/leaderboard-list";
 import { LeaderboardMetrics } from "@/components/leaderboard-metrics";
-import { LeaderboardSkeleton } from "@/components/ui/leaderboard-skeleton";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
 export const metadata: Metadata = {
@@ -16,7 +14,7 @@ export default async function LeaderboardPage({
 	searchParams: Promise<{ page?: string }>;
 }) {
 	const { page } = await searchParams;
-	const pageNumber = Number(page) || 1;
+	const pageNumber = Math.max(1, Number(page) || 1);
 
 	void prefetch(trpc.roast.getLeaderboard.queryOptions({ page: pageNumber, limit: 20 }));
 	void prefetch(trpc.roast.getHomeMetrics.queryOptions());
@@ -40,9 +38,7 @@ export default async function LeaderboardPage({
 					</div>
 
 					{/* Leaderboard Entries */}
-					<Suspense fallback={<LeaderboardSkeleton />}>
-						<LeaderboardList page={pageNumber} />
-					</Suspense>
+					<LeaderboardList page={pageNumber} />
 				</div>
 			</HydrateClient>
 		</main>
