@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { type ComponentProps, forwardRef } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
 
@@ -16,18 +17,18 @@ type NavbarProps = ComponentProps<"nav"> & NavbarVariants;
 const Navbar = forwardRef<HTMLElement, NavbarProps>(({ className, ...props }, ref) => {
 	return (
 		<nav ref={ref} className={navbar({ className })} {...props}>
-			<div className="flex items-center gap-2">
+			<Link href="/" className="flex items-center gap-2">
 				<span className="font-mono text-xl font-bold text-accent-green">{">"}</span>
 				<span className="font-mono text-lg font-medium text-text-primary">devroast</span>
-			</div>
+			</Link>
 
 			<div className="flex items-center gap-6">
-				<a
+				<Link
 					href="/leaderboard"
 					className="font-mono text-[13px] text-text-secondary transition-colors hover:text-text-primary"
 				>
 					leaderboard
-				</a>
+				</Link>
 			</div>
 		</nav>
 	);
