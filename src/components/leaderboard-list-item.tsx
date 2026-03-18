@@ -22,9 +22,9 @@ export function LeaderboardListItem({
 		rank === 1
 			? "text-accent-amber"
 			: rank === 2
-				? "text-[#C0C0C0]"
+				? "text-text-secondary"
 				: rank === 3
-					? "text-[#CD7F32]"
+					? "text-text-tertiary"
 					: "text-text-primary";
 
 	return (
