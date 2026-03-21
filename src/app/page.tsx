@@ -5,6 +5,8 @@ import { ShameLeaderboard } from "@/components/shame-leaderboard";
 import { LeaderboardSkeleton } from "@/components/ui/leaderboard-skeleton";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
+export const revalidate = 3600;
+
 function HeroSection() {
 	return (
 		<div className="flex flex-col items-center gap-3">
