@@ -1,13 +1,15 @@
 "use client";
 
 import NumberFlow from "@number-flow/react";
-import { useQuery } from "@tanstack/react-query";
-import { useTRPC } from "@/trpc/client";
 
-export function HomeMetrics() {
-	const trpc = useTRPC();
-	const { data } = useQuery(trpc.roast.getHomeMetrics.queryOptions());
+type HomeMetricsProps = {
+	data: {
+		totalRoasts: number;
+		avgScore: number;
+	};
+};
 
+export function HomeMetrics({ data }: HomeMetricsProps) {
 	// Valores iniciais 0 enquanto carrega, depois anima para o valor real
 	const totalRoasts = data?.totalRoasts ?? 0;
 	const avgScore = data?.avgScore ?? 0;

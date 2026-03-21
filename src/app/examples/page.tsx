@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { Badge, BadgeDot, BadgeLabel } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
@@ -16,7 +17,10 @@ const sampleCode = `function calculateTotal(items) {
   return total;
 }`;
 
-export default function ExamplesPage() {
+export default async function ExamplesPage() {
+	"use cache";
+	cacheLife("max");
+
 	return (
 		<div className="min-h-screen bg-bg-page p-12 text-text-primary">
 			<h1 className="mb-2 font-mono text-3xl font-bold text-accent-green">UI Components</h1>

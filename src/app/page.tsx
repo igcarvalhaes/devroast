@@ -1,11 +1,12 @@
+"use cache";
+
+import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
 import { CodeInputSection } from "@/components/code-input-section";
 import { HomeMetrics } from "@/components/home-metrics";
 import { ShameLeaderboard } from "@/components/shame-leaderboard";
 import { LeaderboardSkeleton } from "@/components/ui/leaderboard-skeleton";
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
-
-export const revalidate = 3600;
+import { caller, prefetch, trpc } from "@/trpc/server";
 
 function HeroSection() {
 	return (
@@ -23,33 +24,26 @@ function HeroSection() {
 	);
 }
 
-function FooterStats() {
-	return (
-		<HydrateClient>
-			<HomeMetrics />
-		</HydrateClient>
-	);
-}
-
 export default async function Home() {
-	// Prefetch metrics e leaderboard no server
-	prefetch(trpc.roast.getHomeMetrics.queryOptions());
-	prefetch(trpc.roast.getTopWorstRoasts.queryOptions());
+	cacheLife("hours");
+	cacheTag("homepage");
+
+	// Fetch dados diretamente no servidor (cacheado por 1h)
+	const [metrics, leaderboardData] = await Promise.all([
+		caller.roast.getHomeMetrics(),
+		caller.roast.getTopWorstRoasts(),
+	]);
 
 	return (
 		<main className="flex flex-col items-center gap-8 pt-20 pb-0 px-10 bg-bg-page min-h-screen">
 			<HeroSection />
 			<CodeInputSection />
-			<FooterStats />
+			<HomeMetrics data={metrics} />
 
 			{/* Spacer */}
 			<div className="h-[60px] w-full shrink-0" />
 
-			<HydrateClient>
-				<Suspense fallback={<LeaderboardSkeleton />}>
-					<ShameLeaderboard />
-				</Suspense>
-			</HydrateClient>
+			<ShameLeaderboard data={leaderboardData} />
 
 			{/* Bottom spacer */}
 			<div className="h-[60px] w-full shrink-0" />

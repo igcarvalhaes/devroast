@@ -1,15 +1,27 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { CollapsibleCodeRow } from "@/components/ui/collapsible-code-row";
-import { useTRPC } from "@/trpc/client";
 import { button } from "./ui/button";
 
-export function ShameLeaderboard() {
-	const trpc = useTRPC();
-	const { data } = useSuspenseQuery(trpc.roast.getTopWorstRoasts.queryOptions());
+type LeaderboardEntry = {
+	id: string;
+	rank: number;
+	score: string;
+	code: string;
+	codeHtml: string;
+	lineCount: number;
+	language: string;
+};
 
+type ShameLeaderboardProps = {
+	data: {
+		leaderboard: LeaderboardEntry[];
+		totalRoasts: number;
+	};
+};
+
+export function ShameLeaderboard({ data }: ShameLeaderboardProps) {
 	return (
 		<div className="flex flex-col gap-6 w-[960px]">
 			{/* Title Row */}
